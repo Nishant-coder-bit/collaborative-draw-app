@@ -19,14 +19,14 @@ export function Canvas({
      game?.setTool(selectedTool);
     },[selectedTool,game]);
     useEffect(()=>{
-      if(canvasRef.current){
+      if(canvasRef.current && socket){
         const g = new Game(canvasRef.current,roomId,socket);
         setGame(g);
         return ()=>{
             g.destroy();
         }
       }
-    },[canvasRef])
+    },[canvasRef,socket])
 
     return <div style={{height:"100vh",overflow:"hidden"}}>
         <canvas ref= {canvasRef} width={window.innerWidth} height={window.innerHeight}></canvas>

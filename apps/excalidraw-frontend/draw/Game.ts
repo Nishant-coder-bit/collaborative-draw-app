@@ -59,17 +59,18 @@ export class Game {
 
     async init() {
         this.existingShapes = await getExistingShapes(this.roomId);
-        console.log(this.existingShapes);
+        console.log("shapes recieved",this.existingShapes);
         this.clearCanvas();
     }
 
     initHandlers() {
         this.socket.onmessage = (event) => {
             const message = JSON.parse(event.data);
-
+            console.log("message received", message);
             if (message.type == "chat") {
+                console.log("chat message received", message);
                 const parsedShape = JSON.parse(message.message)
-                this.existingShapes.push(parsedShape.shape)
+                this.existingShapes.push(parsedShape)
                 this.clearCanvas();
             }
         }
@@ -79,19 +80,49 @@ export class Game {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = "rgba(0, 0, 0)"
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        this.existingShapes.map((shape) => {
-            if (shape.type === "rect") {
-                this.ctx.strokeStyle = "rgba(255, 255, 255)"
-                this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-            } else if (shape.type === "circle") {
-                console.log(shape);
+        this.existingShapes.map((input) => {
+            // console.log("RAW INPUT:", input); // Debugging log
+        
+            if (!input) {
+                console.error("ERROR: input is undefined or null");
+                return; // Skip this iteration
+            }
+        
+            let parsedShape;
+            try {
+                parsedShape = typeof input === "string" ? JSON.parse(input) : input;
+            } catch (error) {
+                console.error("ERROR: Invalid JSON", error);
+                return; // Skip this iteration
+            }
+        
+            if (!parsedShape.shape) {
+                console.error("ERROR: shape property is missing", parsedShape);
+                return;
+            }
+        
+            let eachShape = parsedShape.shape;
+            // console.log("PARSED SHAPE:", eachShape);
+        
+            if (!eachShape.type) {
+                console.error("ERROR: shape type is undefined", eachShape);
+                return;
+            }
+        
+            // Drawing logic
+            if (eachShape.type === "rect") {
+                this.ctx.strokeStyle = "rgba(255, 255, 255)";
+                this.ctx.strokeRect(eachShape.x, eachShape.y, eachShape.width, eachShape.height);
+            } else if (eachShape.type === "circle") {
+                // console.log("inside circle", eachShape);
                 this.ctx.beginPath();
-                this.ctx.arc(shape.centerX, shape.centerY, Math.abs(shape.radius), 0, Math.PI * 2);
+                this.ctx.arc(eachShape.centerX, eachShape.centerY, Math.abs(eachShape.radius), 0, Math.PI * 2);
                 this.ctx.stroke();
                 this.ctx.closePath();                
             }
-        })
+        });
+        
+        
     }
 
     mouseDownHandler = (e:any) => {
@@ -130,14 +161,22 @@ export class Game {
         }
 
         this.existingShapes.push(shape);
-        
-        this.socket.send(JSON.stringify({
+         console.log("sending shape", shape);
+         console.log("sending shape", JSON.stringify(shape));
+         let message:string = JSON.stringify({
             type: "chat",
             message: JSON.stringify({
                 shape
             }),
             roomId: this.roomId
-        }))
+        })
+         console.log(message);
+        // Ensure WebSocket is still open
+    if (this.socket.readyState === WebSocket.OPEN) {
+        this.socket.send(message);
+    } else {
+        console.log("WebSocket is closed, unable to send message.");
+    }
     }
     mouseMoveHandler = (e:any) => {
         if (this.clicked) {

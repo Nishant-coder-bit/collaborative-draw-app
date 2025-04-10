@@ -77,17 +77,20 @@ wss.on('connection', function connection(ws, request) {
     console.log(parsedData);
 
     if (parsedData.type === "chat") {
+      console.log("chat message received");
+      console.log(parsedData);
       const roomId = parsedData.roomId;
-      const message = parsedData.message;
-
-      await client.chat.create({
+      // const message = JSON.stringify({parsedData.message);
+      const message =parsedData.message;
+     const chatCreated:any = await client.chat.create({
         data: {
           roomId: Number(roomId),
           message,
           userId
         }
       });
-
+      console.log("chat created");
+        
       users.forEach(user => {
         if (user.rooms.includes(roomId)) {
           user.ws.send(JSON.stringify({

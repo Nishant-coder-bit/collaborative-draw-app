@@ -60,7 +60,7 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket
         const selectedTool = window.selectedTool;
         let shape: Shape | null = null;
         if (selectedTool === "rect") {
-
+          console.log(`selectedTool: ${selectedTool}`);
             shape = {
                 type: "rect",
                 x: startX,
@@ -69,6 +69,7 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket
                 width
             }
         } else if (selectedTool === "circle") {
+            console.log(`selectedTool: ${selectedTool}`);
             const radius = Math.max(width, height) / 2;
             shape = {
                 type: "circle",
