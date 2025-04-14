@@ -77,11 +77,13 @@ wss.on('connection', function connection(ws, request) {
     console.log(parsedData);
 
     if (parsedData.type === "chat") {
-      console.log("chat message received");
+      try{
+        console.log("chat message received");
       console.log(parsedData);
       const roomId = parsedData.roomId;
       // const message = JSON.stringify({parsedData.message);
       const message =parsedData.message;
+
      const chatCreated:any = await client.chat.create({
         data: {
           roomId: Number(roomId),
@@ -89,7 +91,7 @@ wss.on('connection', function connection(ws, request) {
           userId
         }
       });
-      console.log("chat created");
+      console.log("chat created successfully", chatCreated);
         
       users.forEach(user => {
         if (user.rooms.includes(roomId)) {
@@ -100,6 +102,12 @@ wss.on('connection', function connection(ws, request) {
           }))
         }
       })
+      }catch(e){
+        console.log("error in chat");
+        // send the error to the user 
+        console.log(e);
+      }
+      
     }
 
   });
