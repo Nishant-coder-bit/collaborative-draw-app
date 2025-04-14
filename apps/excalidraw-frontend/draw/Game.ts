@@ -18,6 +18,12 @@ type Shape = {
     startY: number;
     endX: number;
     endY: number;
+} | {
+    type: "line";
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
 }
 
 export class Game {
@@ -53,7 +59,7 @@ export class Game {
         this.canvas.removeEventListener("mousemove", this.mouseMoveHandler)
     }
 
-    setTool(tool: "circle" | "pencil" | "rect") {
+    setTool(tool: "circle" | "pencil" | "rect" | "line") {
         this.selectedTool = tool;
     }
 
@@ -120,6 +126,14 @@ export class Game {
                 this.ctx.stroke();
                 this.ctx.closePath();                
             }
+            else if(eachShape.type === "line"){
+                this.ctx.strokeStyle = "rgba(255, 255, 255)";
+                this.ctx.beginPath();
+                this.ctx.moveTo(eachShape.startX, eachShape.startY);
+                this.ctx.lineTo(eachShape.endX, eachShape.endY);
+                this.ctx.stroke();
+                this.ctx.closePath();                
+            }
         });
         
         
@@ -153,6 +167,14 @@ export class Game {
                 radius: radius,
                 centerX: this.startX + radius,
                 centerY: this.startY + radius,
+            }
+        }else if(selectedTool === "line"){
+            shape = {
+                type: "line",
+                startX: this.startX,
+                startY: this.startY,
+                endX: e.clientX,
+                endY: e.clientY
             }
         }
 
@@ -194,6 +216,12 @@ export class Game {
                 const centerY = this.startY + radius;
                 this.ctx.beginPath();
                 this.ctx.arc(centerX, centerY, Math.abs(radius), 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.closePath();                
+            } else if(selectedTool === "line"){
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.startX, this.startY);
+                this.ctx.lineTo(e.clientX, e.clientY);
                 this.ctx.stroke();
                 this.ctx.closePath();                
             }
