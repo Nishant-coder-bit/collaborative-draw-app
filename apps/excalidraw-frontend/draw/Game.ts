@@ -24,6 +24,11 @@ type Shape = {
     startY: number;
     endX: number;
     endY: number;
+} | {
+    type: "text";
+    x: number;
+    y: number;
+    text: string;
 }
 
 export class Game {
@@ -35,15 +40,19 @@ export class Game {
     private clicked: boolean;
     private startX = 0;
     private startY = 0;
+    private text = "";
     private selectedTool: Tool = "circle";
-
+    private backgroundColor:any = "white";
     socket: WebSocket;
 
-    constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
+    constructor(canvas: HTMLCanvasElement, roomId?: string, socket?: WebSocket,backgroundColor?:any) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d")!;
         this.existingShapes = [];
+        this.backgroundColor=backgroundColor
+        //@ts-ignore
         this.roomId = roomId;
+        //@ts-ignore
         this.socket = socket;
         this.clicked = false;
         this.init();
@@ -59,32 +68,36 @@ export class Game {
         this.canvas.removeEventListener("mousemove", this.mouseMoveHandler)
     }
 
-    setTool(tool: "circle" | "pencil" | "rect" | "line") {
+    setTool(tool: "circle" | "pencil" | "rect" | "line" | "text") {
         this.selectedTool = tool;
     }
 
     async init() {
+        if(this.roomId)
         this.existingShapes = await getExistingShapes(this.roomId);
         console.log("shapes recieved",this.existingShapes);
         this.clearCanvas();
     }
 
     initHandlers() {
-        this.socket.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            console.log("message received", message);
-            if (message.type == "chat") {
-                console.log("chat message received", message);
-                const parsedShape = JSON.parse(message.message)
-                this.existingShapes.push(parsedShape)
-                this.clearCanvas();
+        if(this.socket){
+            this.socket.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                console.log("message received", message);
+                if (message.type == "chat") {
+                    console.log("chat message received", message);
+                    const parsedShape = JSON.parse(message.message)
+                    this.existingShapes.push(parsedShape)
+                    this.clearCanvas();
+                }
             }
         }
+        
     }
 
     clearCanvas() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.fillStyle = "rgba(0, 0, 0)"
+        this.ctx.fillStyle = this.backgroundColor;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.existingShapes.map((input) => {
             // console.log("RAW INPUT:", input); // Debugging log
@@ -133,8 +146,14 @@ export class Game {
                 this.ctx.lineTo(eachShape.endX, eachShape.endY);
                 this.ctx.stroke();
                 this.ctx.closePath();                
+            }else if(eachShape.type === "text"){
+                this.ctx.font = "28px Georgia";
+                this.ctx.fillStyle = "fuchsia";
+                this.ctx.fillText(eachShape.text, eachShape.x, eachShape.y);
+                 this.ctx.strokeStyle = "rgba(255, 255, 255)";
+                 this.ctx.strokeText(eachShape.text, eachShape.x, eachShape.y);
             }
-        });
+            });
         
         
     }
@@ -143,6 +162,16 @@ export class Game {
         this.clicked = true
         this.startX = e.clientX
         this.startY = e.clientY
+        if(this.selectedTool === "text"){
+            // give a starting line on screen to write text
+            this.ctx.moveTo(this.startX, this.startY);
+            this.ctx.lineTo(this.startX + 1, this.startY);
+            this.ctx.stroke();
+            this.ctx.closePath();
+
+
+        }
+
     }
     mouseUpHandler = (e:any) => {
         this.clicked = false
@@ -175,6 +204,14 @@ export class Game {
                 startY: this.startY,
                 endX: e.clientX,
                 endY: e.clientY
+            }
+        }
+        else if (selectedTool === "text") {
+            shape = {
+                type: "text",
+                x: this.startX,
+                y: this.startY,
+                text: this.text
             }
         }
 
@@ -224,6 +261,11 @@ export class Game {
                 this.ctx.lineTo(e.clientX, e.clientY);
                 this.ctx.stroke();
                 this.ctx.closePath();                
+            }
+            else if (selectedTool === "text") {
+                this.ctx.font = "28px Georgia";
+                this.ctx.fillStyle = "fuchsia";
+                this.ctx.fillText(this.text, this.startX, this.startY);
             }
         }
     }

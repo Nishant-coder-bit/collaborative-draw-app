@@ -1,9 +1,10 @@
 import { Button } from "@repo/ui/button";
 import { Card } from "@repo/ui/card";
 import { Pencil, Share2, Users2, Sparkles, Github, Download } from "lucide-react";
+import { getServerSession } from "next-auth";
 import Link from "next/link";
 
-function App() {
+ async function App() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
