@@ -40,36 +40,43 @@ app.post("/signup", async (req, res) => {
 })
 
 app.post("/signin", async (req, res) => {
-    const parsedData = SigninSchema.safeParse(req.body);
-    if (!parsedData.success) {
-        res.json({
-            message: "Incorrect inputs"
-        })
-        return;
-    }
-
+    // const parsedData = Sign.safeParse(req.body);
+    // if (!parsedData.success) {
+    //     res.json({
+    //         message: "Incorrect inputs"
+    //     })
+    //     return;
+    // }
+    const parsedData = req.body;
     // TODO: Compare the hashed pws here
-    const user = await client.user.findFirst({
+    let user = await client.user.findFirst({
         where: {
-            email: parsedData.data.username,
-            password: parsedData.data.password
+            email: parsedData.email,
+            password: parsedData.password
         }
     })
 
     if (!user) {
-        res.status(403).json({
-            message: "Not authorized"
-        })
-        return;
+        user = await client.user.create({
+            data: {
+                email: parsedData.email,
+                // TODO: Hash the pw
+                password: parsedData.password,
+                name:"nishant"
+            }
+        }) 
     }
-
+ console.log("user inside signin",user);
     const token = jwt.sign({
         userId: user?.id
-    }, JWT_SECRET);
+    }, JWT_SECRET, { expiresIn: '1h' });
 
-    res.json({
-        token
-    })
+    res.json( {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        acessToken:token,
+      });
 })
 
 app.post("/room", middleware, async (req, res) => {
@@ -82,7 +89,7 @@ app.post("/room", middleware, async (req, res) => {
     }
     // @ts-ignore: TODO: Fix this
     const userId = req.userId;
-
+    console.log("inside create room",userId);
     try {
         const room = await client.room.create({
             data: {
@@ -131,10 +138,10 @@ app.get("/room/:slug", async (req, res) => {
     const slug = req.params.slug;
     const room = await client.room.findFirst({
         where: {
-            slug
+            id:Number(slug)
         }
     });
-
+     console.log("inside http backend get room id",room);
     res.json({
         room
     })

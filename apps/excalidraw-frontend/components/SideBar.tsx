@@ -19,11 +19,33 @@ import {
     Sun as LightThemeIcon,
     Moon as DarkThemeIcon,
     Computer as SystemThemeIcon,
-} from "lucide-react";
-interface SideBarProps {
-  onCanvasBackgroundChange?: (color: string) => void;
-}
-export function SideBar({onCanvasBackgroundChange}:SideBarProps) {
+} from "lucide-react";interface SideBarProps {
+    onCanvasBackgroundChange?: (color: string) => void;
+    onCreateRoom: () => void;
+    isCreatingRoom: boolean;
+    roomError: string;
+    onJoinRoom: () => void;
+    roomIdInput: string;
+    roomName:string;
+    setRoomIdInput: (value: string) => void;
+    setRoomName: (value: string) => void;
+    isJoiningRoom: boolean;
+    joinError: string;
+  }
+export function SideBar({ 
+    onCanvasBackgroundChange,
+    onCreateRoom,
+    isCreatingRoom,
+    roomError,
+    onJoinRoom,
+    roomIdInput,
+    setRoomIdInput,
+    roomName,
+    setRoomName,
+    isJoiningRoom,
+    joinError
+}:SideBarProps) 
+    {
     const session = useSession();
     const [isOpen, setIsOpen] = useState(false);
     const menuButtonRef = useRef<HTMLDivElement>(null);
@@ -32,7 +54,6 @@ export function SideBar({onCanvasBackgroundChange}:SideBarProps) {
 
     return (
         <>
-            {/* Menu Trigger Button */}
             <div
                 ref={menuButtonRef}
                 className="dropdown-menu-button"
@@ -52,7 +73,6 @@ export function SideBar({onCanvasBackgroundChange}:SideBarProps) {
                 <MenuIcon size={20} />
             </div>
 
-            {/* Menu Overlay */}
             {isOpen && (
                 <div
                     style={{
@@ -69,17 +89,93 @@ export function SideBar({onCanvasBackgroundChange}:SideBarProps) {
                     }}
                 >
                     <div style={{ padding: "0 12px" }}>
-                        {/* Canvas Section */}
                         <SectionHeader label="Canvas" />
                         
+                        {/* Error Message Display */}
+                        {roomError && (
+                            <div style={{ 
+                                color: "red", 
+                                fontSize: "0.875rem",
+                                padding: "8px 12px",
+                                backgroundColor: "#fee2e2",
+                                borderRadius: "4px",
+                                marginBottom: "8px"
+                            }}>
+                                {roomError}
+                            </div>
+                        )}
+
                         <MenuItem icon={<SaveIcon size={16} />} label="Save to..." />
                         <MenuItem icon={<ExportImageIcon size={16} />} label="Export image..." />
-                        <MenuItem icon={<LiveCollaborationIcon size={16} />} label="Live collaboration..." />
+                        <SectionHeader label="Live Collaboration" />
                         
-                        {/* Tools Section */}
-                        <SectionHeader label="Tools" />
+                        {roomError && (
+                            <div style={{ 
+                                /* ... existing error styles */
+                            }}>
+                                {roomError}
+                            </div>
+                        )}
+                         <div style={{ margin: "8px 0" }}>
+                            <input
+                                type="text"
+                                placeholder="Enter Room Name"
+                                value={roomName}
+                                onChange={(e) => setRoomName(e.target.value)}
+                                style={{
+                                    width: "100%",
+                                    padding: "8px",
+                                    borderRadius: "4px",
+                                    border: "1px solid #ddd",
+                                    fontSize: "14px",
+                                    marginBottom: "8px"
+                                }}
+                            />
+                              <MenuItem 
+                        icon={<LiveCollaborationIcon size={16} />} 
+                        label="Create New Room" 
+                        onClick={onCreateRoom}
+                        disabled={isCreatingRoom}
+                    />
+                            </div>
                       
-                        
+
+                         <div style={{ margin: "8px 0" }}>
+                            <input
+                                type="text"
+                                placeholder="Enter Room ID"
+                                value={roomIdInput}
+                                onChange={(e) => setRoomIdInput(e.target.value)}
+                                style={{
+                                    width: "100%",
+                                    padding: "8px",
+                                    borderRadius: "4px",
+                                    border: "1px solid #ddd",
+                                    fontSize: "14px",
+                                    marginBottom: "8px"
+                                }}
+                            />
+                            <MenuItem
+                                icon={<LiveCollaborationIcon size={16} />}
+                                label={isJoiningRoom ? "Joining..." : "Join Room"}
+                                onClick={onJoinRoom}
+                                disabled={isJoiningRoom || !roomIdInput}
+                            />
+                        </div>
+                        {joinError && (
+                            <div style={{ 
+                                color: "red", 
+                                fontSize: "0.875rem",
+                                padding: "8px 12px",
+                                backgroundColor: "#fee2e2",
+                                borderRadius: "4px",
+                                marginBottom: "8px"
+                            }}>
+                                {joinError}
+                            </div>
+                        )}
+
+                        <SectionHeader label="Tools" />
                         <MenuItem icon={<ResetCanvasIcon size={16} />} label="Reset the canvas" />
                     </div>
 
@@ -87,7 +183,6 @@ export function SideBar({onCanvasBackgroundChange}:SideBarProps) {
 
                     <div style={{ padding: "0 12px" }}>
                         <MenuItem icon={<ExcalidrawPlusIcon size={16} />} label="Excalidraw+" />
-                   
                     </div>
 
                     <Divider />
@@ -95,9 +190,17 @@ export function SideBar({onCanvasBackgroundChange}:SideBarProps) {
                     <div style={{ padding: "0 12px" }}>
                         <SectionHeader label="Account" />
                         {session.status === 'authenticated' ? (
-                            <MenuItem label="Log out" onClick={() => signOut({ callbackUrl: "/" })} />
+                            <MenuItem 
+                                label="Log out" 
+                                onClick={() => signOut({ callbackUrl: "/" })} 
+                                icon={<SignUpIcon size={16} style={{ transform: 'rotate(180deg)' }} />}
+                            />
                         ) : (
-                            <MenuItem label="Sign up" onClick={() => signIn()} icon={<SignUpIcon size={16} />} />
+                            <MenuItem 
+                                label="Sign up" 
+                                onClick={() => signIn()} 
+                                icon={<SignUpIcon size={16} />}
+                            />
                         )}
                     </div>
 
@@ -173,31 +276,33 @@ function Divider() {
   return <div style={{ height: "1px", backgroundColor: "#eee", margin: "8px 0" }} />;
 }
 // Updated MenuItem component
-function MenuItem({ icon, label, shortcut, onClick }: MenuItemProps) {
-  return (
-      <div
-          style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "8px 12px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-              // "&:hover": {
-              //     backgroundColor: "#f5f5f5",
-              // },
-          }}
-          onClick={onClick}
-      >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              {icon}
-              <span>{label}</span>
-          </div>
-          {shortcut && <span style={{ color: "#666", fontSize: "12px" }}>{shortcut}</span>}
-      </div>
-  );
+// Updated MenuItem component with disabled state
+function MenuItem({ icon, label, shortcut, onClick, disabled }: MenuItemProps & { disabled?: boolean }) {
+    return (
+        <div
+            style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 12px",
+                borderRadius: "4px",
+                cursor: disabled ? "not-allowed" : "pointer",
+                fontSize: "14px",
+                opacity: disabled ? 0.5 : 1,
+                backgroundColor: disabled ? "transparent" : "transparent",
+                pointerEvents: disabled ? "none" : "auto",
+            }}
+            onClick={!disabled ? onClick : undefined}
+        >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                {icon}
+                <span>{label}</span>
+            </div>
+            {shortcut && <span style={{ color: "#666", fontSize: "12px" }}>{shortcut}</span>}
+        </div>
+    );
 }
+
 
 interface ThemeButtonProps {
     icon: React.ReactNode;

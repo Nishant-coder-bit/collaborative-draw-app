@@ -99,6 +99,7 @@ export class Game {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = this.backgroundColor;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        console.log("inside clear canvas");
         this.existingShapes.map((input) => {
             // console.log("RAW INPUT:", input); // Debugging log
         

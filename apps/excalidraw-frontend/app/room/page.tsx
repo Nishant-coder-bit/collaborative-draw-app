@@ -4,54 +4,123 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { RoomCanvas } from '@/components/RoomCanvas'; // Adjust the import path as needed
+import { RoomCanvas } from '@/components/RoomCanvas';
 import { Canvas } from '@/components/Canvas';
 import { SideBar } from '@/components/SideBar';
 
 export default function RoomPage() {
-  const { data: session, status } = useSession();
+  const { data, status } = useSession();
   const router = useRouter();
   const [roomId, setRoomId] = useState('');
   const [canvasBackground, setCanvasBackground] = useState('#ffffff');
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [roomError, setRoomError] = useState('');
+  const [roomIdInput, setRoomIdInput] = useState('');
+  const [roomName,setRoomName] = useState('');
+  const [isJoiningRoom, setIsJoiningRoom] = useState(false);
+  const [joinError, setJoinError] = useState('');
 
   const handleBackgroundChange = (color: string) => {
-      setCanvasBackground(color);
-      // Apply the color to your canvas implementation here
+    setCanvasBackground(color);
   };
+
+  const handleCreateRoom = async () => {
+    if (!data?.accessToken) return;
+    
+    setIsCreatingRoom(true);
+    setRoomError('');
+    
+    try {
+      const response = await fetch('http://localhost:3001/room', {
+        method: 'POST',
+        headers: {
+          'authorization': `${data.accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: roomName })
+      });
+
+      if (response.status === 200) {
+        const { roomId: newRoomId } = await response.json();
+        setRoomId(newRoomId);
+      } else {
+        setRoomError('Failed to create room');
+      }
+    } catch (error) {
+      setRoomError('Error creating room');
+      console.error('Error creating room:', error);
+    } finally {
+      setIsCreatingRoom(false);
+    }
+  };
+
+  const handleJoinRoom = async () => {
+    if (!roomIdInput.trim()) return;
+    
+    setIsJoiningRoom(true);
+    setJoinError('');
+    
+    try {
+      const response = await fetch(`http://localhost:3001/room/${roomIdInput}`, {
+        headers: {
+          'authorization': `${data?.accessToken}`,
+        }
+      });
+
+      if (response.status === 200) {
+        setRoomId(roomIdInput);
+      } else {
+        setJoinError('Room not found');
+      }
+    } catch (error) {
+      setJoinError('Error joining room');
+      console.error('Error joining room:', error);
+    } finally {
+      setIsJoiningRoom(false);
+    }
+  };
+
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/signin'); // Redirect to sign-in if not authenticated
-    } else if (status === 'authenticated' && !roomId) {
-       // Give option to create room using backend http call 
-      const newRoomId = ""
-      setRoomId(newRoomId);
-   
+      router.push('/signin');
     }
-  }, [status, router, roomId]);
+  }, [status, router]);
 
   if (status === 'loading') {
-    return <div>Loading...</div>;
-  }
-
-  if (status === 'unauthenticated') {
-    return null; // Or a message indicating they need to sign in
+    return <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+    </div>;
   }
 
   return (
-    <>
-  
-    <div style={{display:'flex',height:'100vh'}}>
-       
-    <SideBar onCanvasBackgroundChange={handleBackgroundChange}/>
-       {roomId ? (
-         <RoomCanvas roomId={roomId} />
-       ) : (
-         
-         <Canvas key={canvasBackground} backgroundColor={canvasBackground}/>
-         
-       )}
-     </div>
-    </>
-    
+    <div className="flex h-screen">
+      <SideBar 
+        onCanvasBackgroundChange={handleBackgroundChange}
+        onCreateRoom={handleCreateRoom}
+        isCreatingRoom={isCreatingRoom}
+        roomError={roomError}
+        onJoinRoom={handleJoinRoom}
+        roomIdInput={roomIdInput}
+        setRoomIdInput={setRoomIdInput}
+        setRoomName = {setRoomName}
+        isJoiningRoom={isJoiningRoom}
+        joinError={joinError}
+      />
+      
+      <div className="flex-1 relative">
+        {roomId ? (
+          <RoomCanvas 
+            key={roomId}
+            roomId={roomId}
+            backgroundColor={canvasBackground}
+          />
+        ) : (
+          <Canvas 
+            key={canvasBackground}
+            backgroundColor={canvasBackground}
+          />
+        )}
+      </div>
+    </div>
   );
 }

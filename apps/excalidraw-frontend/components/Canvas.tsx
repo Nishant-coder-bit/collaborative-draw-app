@@ -44,7 +44,7 @@ export function Canvas({
                 newGame.destroy();
             };
         }
-    }, [canvasRef, socket, roomId]);
+    }, [canvasRef, socket, roomId,backgroundColor]);
 
     return (
         <div style={{ height: "100vh", overflow: "hidden" }}>
