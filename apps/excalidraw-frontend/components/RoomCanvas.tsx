@@ -1,16 +1,16 @@
 "use client";
 
 import { WS_URL } from "@/config";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Canvas } from "./Canvas";
 import { useSession } from "next-auth/react";
 
 export function RoomCanvas({roomId,backgroundColor}: {roomId: string,backgroundColor?:any}) {
     const [socket, setSocket] = useState<WebSocket | null>(null);
-    const session = useSession();
+    const session:any = useSession();
     console.log("inside roomCanva",session);
     useEffect(() => {
-        const ws = new WebSocket(`${WS_URL}?token=${session.data.accessToken}`);
+        const ws = new WebSocket(`${WS_URL}?token=${session.data?.accessToken}`);
                    ws.onopen = () => {
             setSocket(ws);
             console.log("inside room canvas",roomId);
@@ -41,6 +41,6 @@ export function RoomCanvas({roomId,backgroundColor}: {roomId: string,backgroundC
     }
 
     return <div>
-        <Canvas key={roomId} roomId={roomId} socket={socket} />
+        <Canvas key={roomId} roomId={roomId} socket={socket} backgroundColor={backgroundColor} />
     </div>
 }

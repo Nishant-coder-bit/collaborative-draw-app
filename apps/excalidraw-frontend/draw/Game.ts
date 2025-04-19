@@ -82,14 +82,22 @@ export class Game {
     initHandlers() {
         if(this.socket){
             this.socket.onmessage = (event) => {
-                const message = JSON.parse(event.data);
-                console.log("message received", message);
-                if (message.type == "chat") {
-                    console.log("chat message received", message);
-                    const parsedShape = JSON.parse(message.message)
-                    this.existingShapes.push(parsedShape)
-                    this.clearCanvas();
+                try{
+                    const recievedMessage = JSON.parse(event.data);
+                    console.log("message received", recievedMessage);
+                    if (recievedMessage.type == "chat") {
+                        console.log("chat message received", recievedMessage.message);
+                        const parsedMessage = recievedMessage.message;
+                        const parsedShape = JSON.parse((parsedMessage));
+                        // console.log(`inside on message ${parsedShape.toString()}`);
+                        this.existingShapes.push(parsedShape.shape);
+                        console.log("inside on message",parsedShape.shape);
+                        this.clearCanvas();
+                    }
+                }catch(e){
+                    console.error('Error parsing message',e);
                 }
+                
             }
         }
         
@@ -107,7 +115,7 @@ export class Game {
                 console.error("ERROR: input is undefined or null");
                 return; // Skip this iteration
             }
-        
+             console.log("input",input);
             let parsedShape;
             try {
                 parsedShape = typeof input === "string" ? JSON.parse(input) : input;
@@ -116,13 +124,13 @@ export class Game {
                 return; // Skip this iteration
             }
         
-            if (!parsedShape.shape) {
+            if (parsedShape.shape === null) {
                 console.error("ERROR: shape property is missing", parsedShape);
                 return;
             }
-        
-            let eachShape = parsedShape.shape;
-            // console.log("PARSED SHAPE:", eachShape);
+            console.log("parsehed Shape ",parsedShape);
+            let eachShape = parsedShape;
+            console.log("PARSED SHAPE:", eachShape);
         
             if (!eachShape.type) {
                 console.error("ERROR: shape type is undefined", eachShape);

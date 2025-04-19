@@ -1,4 +1,4 @@
-// pages/room.js
+
 "use client";
 
 import { useSession } from 'next-auth/react';
@@ -9,7 +9,7 @@ import { Canvas } from '@/components/Canvas';
 import { SideBar } from '@/components/SideBar';
 
 export default function RoomPage() {
-  const { data, status } = useSession();
+  const { data, status }:any = useSession();
   const router = useRouter();
   const [roomId, setRoomId] = useState('');
   const [canvasBackground, setCanvasBackground] = useState('#ffffff');
@@ -19,7 +19,6 @@ export default function RoomPage() {
   const [roomName,setRoomName] = useState('');
   const [isJoiningRoom, setIsJoiningRoom] = useState(false);
   const [joinError, setJoinError] = useState('');
-
   const handleBackgroundChange = (color: string) => {
     setCanvasBackground(color);
   };
@@ -61,6 +60,7 @@ export default function RoomPage() {
     setJoinError('');
     
     try {
+      
       const response = await fetch(`http://localhost:3001/room/${roomIdInput}`, {
         headers: {
           'authorization': `${data?.accessToken}`,
@@ -103,6 +103,7 @@ export default function RoomPage() {
         roomIdInput={roomIdInput}
         setRoomIdInput={setRoomIdInput}
         setRoomName = {setRoomName}
+        roomName={roomName}
         isJoiningRoom={isJoiningRoom}
         joinError={joinError}
       />
